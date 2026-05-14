@@ -1,0 +1,4 @@
+docs/
+.claude/
+.commandhistory/
+tests/bats/

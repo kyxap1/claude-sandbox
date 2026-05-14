@@ -1,0 +1,20 @@
+services:
+  claude:
+    build:
+      context: .devcontainer
+      args:
+        NODE_VERSION: ${NODE_VERSION}
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION}
+        GIT_DELTA_VERSION: ${GIT_DELTA_VERSION}
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - .:/workspace
+    user: node
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      CLAUDE_CONFIG_DIR: "/workspace/.claude"
+      DISABLE_AUTOUPDATER: "1"
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+    entrypoint: /usr/local/bin/entrypoint.sh
