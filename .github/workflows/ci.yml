@@ -40,10 +40,12 @@ jobs:
         with:
           path: .
           load-mode: strict
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - uses: docker/build-push-action@v7
         with:
           context: .devcontainer
+          platforms: linux/amd64,linux/arm64
           push: false
           build-args: |
             NODE_VERSION=${{ env.NODE_VERSION }}
@@ -61,6 +63,7 @@ jobs:
         with:
           path: .
           load-mode: strict
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -76,6 +79,7 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .devcontainer
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
