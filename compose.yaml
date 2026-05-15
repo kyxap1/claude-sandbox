@@ -10,4 +10,5 @@ services:
       - NET_ADMIN
       - NET_RAW
     volumes:
+      - ~/.claude:/home/node/.claude
       - .:/workspace

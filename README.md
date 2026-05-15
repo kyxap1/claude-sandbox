@@ -11,13 +11,13 @@ This image runs Claude in an isolated Docker container with an egress firewall �
 ## Usage
 
 ```bash
-docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace kyxap/claude-sandbox
+docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v ~/.claude:/home/node/.claude -v "$PWD":/workspace kyxap/claude-sandbox
 ```
 
 Add to your `~/.bashrc` or `~/.zshrc` for a convenient alias:
 
 ```bash
-alias claude='docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace kyxap/claude-sandbox'
+alias claude='docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v ~/.claude:/home/node/.claude -v "$PWD":/workspace kyxap/claude-sandbox'
 ```
 
 Then use it like the regular CLI: `claude`, `claude -p "fix the bug"`, etc.
@@ -43,12 +43,8 @@ Claude runs in `--dangerously-skip-permissions` mode by default — the firewall
 
 ## Persistent State
 
-Auth tokens, settings, and shell history persist in the workspace bind mount:
-
-- `.claude/` — Claude Code config and auth
-- `.commandhistory/` — shell history
-
-Both are gitignored.
+- `~/.claude/` (host) — auth, global settings, plugins (shared across projects)
+- `.commandhistory/` (workspace) — shell history
 
 ## Development
 
