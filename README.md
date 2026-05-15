@@ -14,7 +14,11 @@ This image runs Claude in an isolated Docker container with an egress firewall â
 docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace kyxap/claude-sandbox
 ```
 
-To add extra allowed domains, create `.claude/allowed-domains.extra.conf` in your project root:
+## Firewall
+
+The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
+
+Built-in domains are baked into the image from `.devcontainer/allowed-domains.conf`. To add project-specific domains, create `.claude/allowed-domains.extra.conf` in your project root:
 
 ```
 my-api.example.com
@@ -23,17 +27,7 @@ internal-registry.company.net
 
 The built-in domains are always applied; extras are additive.
 
-## Firewall
-
-The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
-
-Built-in domains are baked into the image from `.devcontainer/allowed-domains.conf`. Extra domains can be added per-project (see [Usage](#usage)). Apply changes:
-
-```bash
-docker compose restart claude
-```
-
-### Permissions
+## Permissions
 
 Claude runs in `--dangerously-skip-permissions` mode by default â€” the firewall is the safety net.
 
