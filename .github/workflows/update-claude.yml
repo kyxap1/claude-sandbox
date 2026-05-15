@@ -1,0 +1,50 @@
+name: Update Claude Code
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: xom9ikk/dotenv@v2.4.0
+        with:
+          path: .
+          load-mode: strict
+      - name: Check for new version
+        id: check
+        run: |
+          latest=$(npm view @anthropic-ai/claude-code version)
+          echo "current=${{ env.CLAUDE_CODE_VERSION }}" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "${{ env.CLAUDE_CODE_VERSION }}" != "$latest" ]; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Update version
+        if: steps.check.outputs.updated == 'true'
+        run: |
+          latest="${{ steps.check.outputs.latest }}"
+          sed -i "s/CLAUDE_CODE_VERSION=.*/CLAUDE_CODE_VERSION=$latest/" .env
+          sed -i "s/ARG CLAUDE_CODE_VERSION=.*/ARG CLAUDE_CODE_VERSION=$latest/" .devcontainer/Dockerfile
+          sed -i "s/CLAUDE_CODE_VERSION=.*/CLAUDE_CODE_VERSION=$latest/" README.md
+      - name: Create PR
+        if: steps.check.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="update-claude-${{ steps.check.outputs.latest }}"
+          git checkout -b "$branch"
+          git add .env .devcontainer/Dockerfile README.md
+          git commit -m "chore: update claude code ${{ steps.check.outputs.current }} → ${{ steps.check.outputs.latest }}"
+          git push -u origin "$branch"
+          gh pr create \
+            --title "Update Claude Code to ${{ steps.check.outputs.latest }}" \
+            --body "Automated update: \`${{ steps.check.outputs.current }}\` → \`${{ steps.check.outputs.latest }}\`"
+          gh pr merge "$branch" --auto --squash
