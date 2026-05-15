@@ -1,8 +1,8 @@
 # Claude Code Devcontainer
 
-Running Claude Code directly on the host (`brew install claude-code`) gives it access to your secrets, keys, and credentials. This image runs Claude in an isolated Docker container with an egress firewall — so it can only reach explicitly allowed domains.
+Running Claude Code directly on the host (`brew install claude-code`) gives it access to your secrets, keys, and credentials.
 
-Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
+This image runs Claude in an isolated Docker container with an egress firewall — so it can only reach explicitly allowed domains.
 
 ## Prerequisites
 
@@ -83,6 +83,10 @@ Built-in domains are baked into the image from `.devcontainer/allowed-domains.co
 ```bash
 docker compose restart claude
 ```
+
+## Permissions
+
+Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
 
 ## CI
 

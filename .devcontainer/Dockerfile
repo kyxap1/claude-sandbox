@@ -38,10 +38,14 @@ RUN mkdir -p /usr/local/share/npm-global && \
 
 ARG USERNAME=node
 
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  && mkdir /commandhistory \
-  && touch /commandhistory/.bash_history \
-  && chown -R $USERNAME /commandhistory
+RUN mkdir /commandhistory && touch /commandhistory/.bash_history && chown -R $USERNAME /commandhistory \
+  && { echo 'export HISTFILE=/commandhistory/.bash_history'; \
+       echo 'export HISTCONTROL="ignoreboth"'; \
+       echo 'export HISTTIMEFORMAT="%Y %h %d %H:%M:%S "'; \
+       echo 'export HISTFILESIZE=-1'; \
+       echo 'export HISTSIZE=-1'; \
+       echo 'export PROMPT_COMMAND="history -a"'; \
+     } >> /etc/bash.bashrc
 
 ENV DEVCONTAINER=true
 
