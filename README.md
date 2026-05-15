@@ -1,6 +1,7 @@
 # Claude Code Devcontainer
 
-Isolated environment for running Claude Code inside Docker with egress firewall.
+Running Claude Code directly on the host (`brew install claude-code`) gives it access to your secrets, keys, and credentials. This image runs Claude in an isolated Docker container with an egress firewall — so it can only reach explicitly allowed domains.
+
 Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
 
 ## Prerequisites
