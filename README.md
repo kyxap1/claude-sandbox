@@ -14,6 +14,14 @@ This image runs Claude in an isolated Docker container with an egress firewall â
 docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace kyxap/claude-sandbox
 ```
 
+Add to your `~/.bashrc` or `~/.zshrc` for a convenient alias:
+
+```bash
+alias claude='docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace kyxap/claude-sandbox'
+```
+
+Then use it like the regular CLI: `claude`, `claude -p "fix the bug"`, etc.
+
 ## Firewall
 
 The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
