@@ -18,7 +18,9 @@ docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v "$PWD":/workspace k
 
 The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
 
-Built-in domains are baked into the image from `.devcontainer/allowed-domains.conf`. To add project-specific domains, create `.claude/allowed-domains.extra.conf` in your project root:
+Built-in domains are baked into the image from [`.devcontainer/allowed-domains.conf`](.devcontainer/allowed-domains.conf).
+
+To add project-specific domains, create `.claude/allowed-domains.extra.conf` in your project root:
 
 ```
 my-api.example.com
