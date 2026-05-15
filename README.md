@@ -12,7 +12,7 @@ Claude runs in `--dangerously-skip-permissions` mode by default — the firewall
 Interactive mode (launches Claude directly):
 
 ```bash
-docker compose run --rm -it claude
+docker compose run --rm -it --build claude
 ```
 
 Daemon mode (background, then attach):
@@ -34,9 +34,10 @@ docker compose down
 .devcontainer/
   Dockerfile              # image: node + claude-code + firewall tools
   devcontainer.json       # fallback for VS Code / Codespaces users
+  entrypoint.sh           # firewall + claude (TTY) or sleep (daemon)
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
   lib/firewall-helpers.sh # shared functions for firewall script
-  allowed-domains.conf    # domains allowed through the firewall
+  allowed-domains.conf    # default allowed domains (baked into image)
 compose.yaml              # primary entry point
 .env                      # pinned versions (single source of truth)
 ```
@@ -59,17 +60,31 @@ docker compose up -d --build
 
 ## Firewall
 
-The container blocks all outbound traffic except domains listed in `.devcontainer/allowed-domains.conf` and GitHub IP ranges (fetched dynamically).
+The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
 
-To allow a new domain, add it to `allowed-domains.conf` and restart the container:
+Built-in domains are baked into the image from `.devcontainer/allowed-domains.conf`. To add project-specific domains, create `.claude/allowed-domains.extra.conf` — it is merged with the built-in list at startup. Apply changes:
 
 ```bash
 docker compose restart claude
 ```
 
-No rebuild needed — the config file is read from the bind-mounted workspace at container start.
+## Using the image in another project
 
-Verification runs automatically at container start. Telemetry and autoupdater are disabled via environment variables.
+```bash
+docker run --rm -it \
+  --cap-add NET_ADMIN --cap-add NET_RAW \
+  -v "$PWD":/workspace \
+  kyxap/claude-sandbox
+```
+
+To add extra allowed domains, create `.claude/allowed-domains.extra.conf` in the project root:
+
+```
+my-api.example.com
+internal-registry.company.net
+```
+
+The built-in domains are always applied; extras are additive.
 
 ## CI
 
@@ -78,7 +93,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR t
 - **test** — runs bats unit tests
 - **build-and-push** — builds the Docker image and pushes to `kyxap/claude-sandbox` on Docker Hub (only on push to `master` or version tag)
 
-Image tags: semver from git tag (e.g., `v1.2.3` → `1.2.3`) + short commit SHA. Immutable tags are enabled on Docker Hub.
+Image tags: `latest` on master push, semver from git tag (e.g., `v1.2.3` → `1.2.3`).
 
 Build args are read from `.env` automatically — update versions there, CI picks them up.
 

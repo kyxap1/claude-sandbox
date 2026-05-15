@@ -65,13 +65,21 @@ ENV SHELL=/bin/bash
 ENV EDITOR=vim
 ENV VISUAL=vim
 
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV CLAUDE_CONFIG_DIR="/workspace/.claude"
+ENV DISABLE_AUTOUPDATER="1"
+ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
+
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 COPY init-firewall.sh /usr/local/bin/
 COPY lib/firewall-helpers.sh /usr/local/bin/lib/
 COPY entrypoint.sh /usr/local/bin/
+COPY allowed-domains.conf /etc/allowed-domains.conf
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

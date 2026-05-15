@@ -66,15 +66,22 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add allowed domains from config file
-DOMAIN_CONF="/workspace/.devcontainer/allowed-domains.conf"
+# Resolve and add allowed domains (baked-in default + optional user extras)
+BUILTIN_CONF="/etc/allowed-domains.conf"
+EXTRA_CONF="/workspace/.claude/allowed-domains.extra.conf"
 
 DOMAINS=()
 while IFS= read -r domain; do
     DOMAINS+=("$domain")
-done < <(parse_domains_conf "$DOMAIN_CONF")
+done < <(parse_domains_conf "$BUILTIN_CONF")
+echo "Loaded ${#DOMAINS[@]} domains from built-in config"
 
-echo "Loaded ${#DOMAINS[@]} domains from $DOMAIN_CONF"
+if [ -f "$EXTRA_CONF" ]; then
+    while IFS= read -r domain; do
+        DOMAINS+=("$domain")
+    done < <(parse_domains_conf "$EXTRA_CONF")
+    echo "Loaded additional domains from $EXTRA_CONF (total: ${#DOMAINS[@]})"
+fi
 
 for domain in "${DOMAINS[@]}"; do
     echo "Resolving $domain..."

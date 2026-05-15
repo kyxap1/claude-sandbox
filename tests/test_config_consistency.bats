@@ -7,6 +7,7 @@ setup() {
     DOTENV="$REPO_ROOT/.env"
     DOMAINS_CONF="$REPO_ROOT/.devcontainer/allowed-domains.conf"
     DOCKERFILE="$REPO_ROOT/.devcontainer/Dockerfile"
+    FIREWALL_SCRIPT="$REPO_ROOT/.devcontainer/init-firewall.sh"
 }
 
 # --- .env variables are used in devcontainer.json build args ---
@@ -22,23 +23,9 @@ setup() {
 @test ".env: every variable is referenced in compose.yaml build args" {
     while IFS='=' read -r key _; do
         [[ -z "$key" || "$key" =~ ^# ]] && continue
-        run grep -q "\${${key}}" "$COMPOSE_YAML"
-        [ "$status" -eq 0 ] || fail ".env has $key but compose.yaml does not reference \${$key}"
+        run grep -q "${key}:" "$COMPOSE_YAML"
+        [ "$status" -eq 0 ] || fail ".env has $key but compose.yaml build args does not list it"
     done < "$DOTENV"
-}
-
-# --- Environment variables match between devcontainer.json and compose.yaml ---
-
-@test "CLAUDE_CONFIG_DIR matches between devcontainer.json and compose.yaml" {
-    dc_val=$(jq -r '.containerEnv.CLAUDE_CONFIG_DIR' "$DEVCONTAINER_JSON")
-    compose_val=$(grep 'CLAUDE_CONFIG_DIR:' "$COMPOSE_YAML" | sed 's/.*: *//' | tr -d '"')
-    [ "$dc_val" = "$compose_val" ]
-}
-
-@test "NODE_OPTIONS matches between devcontainer.json and compose.yaml" {
-    dc_val=$(jq -r '.containerEnv.NODE_OPTIONS' "$DEVCONTAINER_JSON")
-    compose_val=$(grep 'NODE_OPTIONS:' "$COMPOSE_YAML" | sed 's/.*: *//' | tr -d '"')
-    [ "$dc_val" = "$compose_val" ]
 }
 
 # --- allowed-domains.conf ---
@@ -49,6 +36,22 @@ setup() {
 
 @test "allowed-domains.conf contains api.anthropic.com" {
     grep -q "^api.anthropic.com" "$DOMAINS_CONF"
+}
+
+@test "Dockerfile bakes allowed-domains.conf into /etc/" {
+    grep -q 'COPY allowed-domains.conf /etc/allowed-domains.conf' "$DOCKERFILE"
+}
+
+@test "firewall reads built-in config from /etc/allowed-domains.conf" {
+    grep -q '/etc/allowed-domains.conf' "$FIREWALL_SCRIPT"
+}
+
+@test "firewall supports extra domains from .claude/" {
+    grep -q '/workspace/.claude/allowed-domains.extra.conf' "$FIREWALL_SCRIPT"
+}
+
+@test "firewall checks extra config file existence before reading" {
+    grep -q '\[ -f "$EXTRA_CONF" \]' "$FIREWALL_SCRIPT"
 }
 
 # --- Dockerfile consistency ---

@@ -21,12 +21,6 @@
     }
   },
   "remoteUser": "node",
-  "containerEnv": {
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/workspace/.claude",
-    "DISABLE_AUTOUPDATER": "1",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
-  },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
   "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
