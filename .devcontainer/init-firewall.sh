@@ -47,19 +47,19 @@ ipset create allowed-domains hash:net
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)
 if [ -z "$gh_ranges" ]; then
-    echo "ERROR: Failed to fetch GitHub IP ranges"
+    echo "ERROR: Failed to fetch GitHub IP ranges" >&2
     exit 1
 fi
 
 if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
-    echo "ERROR: GitHub API response missing required fields"
+    echo "ERROR: GitHub API response missing required fields" >&2
     exit 1
 fi
 
 echo "Processing GitHub IPs..."
 while read -r cidr; do
     if ! validate_cidr "$cidr"; then
-        echo "ERROR: Invalid CIDR range from GitHub meta: $cidr"
+        echo "ERROR: Invalid CIDR range from GitHub meta: $cidr" >&2
         exit 1
     fi
     echo "Adding GitHub range $cidr"
@@ -87,13 +87,13 @@ for domain in "${DOMAINS[@]}"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
+        echo "ERROR: Failed to resolve $domain" >&2
         exit 1
     fi
 
     while read -r ip; do
         if ! validate_ipv4 "$ip"; then
-            echo "ERROR: Invalid IP from DNS for $domain: $ip"
+            echo "ERROR: Invalid IP from DNS for $domain: $ip" >&2
             exit 1
         fi
         echo "Adding $ip for $domain"
@@ -104,7 +104,7 @@ done
 # Get host IP from default route
 HOST_IP=$(ip route | grep default | cut -d" " -f3)
 if [ -z "$HOST_IP" ]; then
-    echo "ERROR: Failed to detect host IP"
+    echo "ERROR: Failed to detect host IP" >&2
     exit 1
 fi
 
@@ -130,19 +130,13 @@ iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
 # Explicitly REJECT all other outbound traffic for immediate feedback
 iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
-echo "Firewall configuration complete"
 echo "Verifying firewall rules..."
 if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - was able to reach https://example.com"
+    echo "ERROR: Firewall verification failed - was able to reach https://example.com" >&2
     exit 1
-else
-    echo "Firewall verification passed - unable to reach https://example.com as expected"
 fi
-
-# Verify GitHub API access
 if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
+    echo "ERROR: Firewall verification failed - unable to reach https://api.github.com" >&2
     exit 1
-else
-    echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
+echo "Firewall verification passed"
