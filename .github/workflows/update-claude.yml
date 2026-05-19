@@ -45,8 +45,9 @@ jobs:
           git checkout -b "$branch"
           git add .env .devcontainer/Dockerfile README.md
           git commit -m "chore: update claude code ${{ steps.check.outputs.current }} → ${{ steps.check.outputs.latest }}"
+          git push origin --delete "$branch" 2>/dev/null || true
           git push -u origin "$branch"
           gh pr create \
             --title "Update Claude Code to ${{ steps.check.outputs.latest }}" \
             --body "Automated update: \`${{ steps.check.outputs.current }}\` → \`${{ steps.check.outputs.latest }}\`"
-          gh pr merge "$branch" --auto --squash
+          gh pr merge "$branch" --squash --delete-branch
