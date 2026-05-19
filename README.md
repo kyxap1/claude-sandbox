@@ -11,16 +11,25 @@ This image runs Claude in an isolated Docker container with an egress firewall â
 ## Usage
 
 ```bash
-docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v ~/.claude:/home/node/.claude -v "$PWD":/workspace kyxap/claude-sandbox
+./claude-sandbox
 ```
 
 Add to your `~/.bashrc` or `~/.zshrc` for a convenient alias:
 
 ```bash
-alias claude='docker run --rm -it --cap-add NET_ADMIN --cap-add NET_RAW -v ~/.claude:/home/node/.claude -v "$PWD":/workspace kyxap/claude-sandbox'
+alias claude='/path/to/claude-sandbox'
 ```
 
 Then use it like the regular CLI: `claude`, `claude -p "fix the bug"`, etc.
+
+Mount additional directories with `-v`:
+
+```bash
+claude -v ~/other-repo
+claude -v ~/repo-a -v ~/repo-b
+```
+
+Mounted directories are available inside the container at `/mnt/<dirname>`.
 
 ## Firewall
 
