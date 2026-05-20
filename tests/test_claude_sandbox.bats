@@ -72,3 +72,27 @@ export -f docker
   [[ "$output" =~ "/mnt/repo-a" ]]
   [[ "$output" =~ "kyxap/claude-sandbox --continue" ]]
 }
+
+@test "SANDBOX_FIREWALL passes through to docker" {
+  SANDBOX_FIREWALL=false run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"SANDBOX_FIREWALL=false"* ]]
+}
+
+@test "SANDBOX_FIREWALL defaults to true" {
+  unset SANDBOX_FIREWALL
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"SANDBOX_FIREWALL=true"* ]]
+}
+
+@test "mounts ~/.claude.json into container" {
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *".claude.json:/home/node/.claude.json"* ]]
+}
+
+@test "creates ~/.claude.json if missing" {
+  HOME="$TEST_TMPDIR" run bash "$SCRIPT"
+  [ -f "$TEST_TMPDIR/.claude.json" ]
+}

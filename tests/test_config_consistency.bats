@@ -72,6 +72,41 @@ setup() {
     grep -q '@anthropic-ai/claude-code' "$DOCKERFILE"
 }
 
+# --- managed-settings.json ---
+
+@test "managed-settings.json exists" {
+    [ -f "$REPO_ROOT/.devcontainer/managed-settings.json" ]
+}
+
+@test "managed-settings.json is valid JSON" {
+    run jq empty "$REPO_ROOT/.devcontainer/managed-settings.json"
+    [ "$status" -eq 0 ]
+}
+
+@test "managed-settings.json has skipDangerousModePermissionPrompt" {
+    run jq -e '.skipDangerousModePermissionPrompt' "$REPO_ROOT/.devcontainer/managed-settings.json"
+    [ "$status" -eq 0 ]
+    [ "$output" = "true" ]
+}
+
+@test "Dockerfile copies managed-settings.json into /etc/claude-code/" {
+    grep -q 'COPY managed-settings.json /etc/claude-code/managed-settings.json' "$DOCKERFILE"
+}
+
+# --- entrypoint firewall toggle ---
+
+@test "entrypoint checks SANDBOX_FIREWALL variable" {
+    grep -q 'SANDBOX_FIREWALL' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "entrypoint defaults SANDBOX_FIREWALL to true" {
+    grep -q '${SANDBOX_FIREWALL:-true}' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "compose.yaml declares SANDBOX_FIREWALL env" {
+    grep -q 'SANDBOX_FIREWALL' "$COMPOSE_YAML"
+}
+
 # --- .env versions are valid ---
 
 @test ".env: NODE_VERSION is set and non-empty" {

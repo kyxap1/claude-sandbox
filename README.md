@@ -35,6 +35,19 @@ Mounted directories are available inside the container at `/mnt/<dirname>`.
 
 The container blocks all outbound traffic except allowed domains and GitHub IP ranges (fetched dynamically). Verification runs automatically at container start.
 
+To disable the firewall:
+
+```bash
+SANDBOX_FIREWALL=false ./claude-sandbox
+```
+
+Or in `compose.yaml`:
+
+```yaml
+environment:
+  SANDBOX_FIREWALL: "false"
+```
+
 Built-in domains are baked into the image from [`.devcontainer/allowed-domains.conf`](.devcontainer/allowed-domains.conf).
 
 To add project-specific domains, create `.claude/allowed-domains.extra.conf` in your project root:
@@ -88,6 +101,7 @@ docker compose down
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
   lib/firewall-helpers.sh # shared functions for firewall script
   allowed-domains.conf    # default allowed domains (baked into image)
+  managed-settings.json   # Claude Code managed settings (baked into image)
 compose.yaml              # primary entry point
 .env                      # pinned versions (single source of truth)
 ```

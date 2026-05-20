@@ -70,8 +70,6 @@ ENV EDITOR=vim
 ENV VISUAL=vim
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-ENV DISABLE_AUTOUPDATER="1"
-ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
 
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
@@ -83,6 +81,8 @@ USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
+
+COPY managed-settings.json /etc/claude-code/managed-settings.json
 USER node
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

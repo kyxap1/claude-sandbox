@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+[[ -f ~/.claude.json ]] || touch ~/.claude.json
+
 args=(
   --rm -it --pull always
   --cap-add NET_ADMIN --cap-add NET_RAW
+  -e SANDBOX_FIREWALL="${SANDBOX_FIREWALL:-true}"
   -v ~/.claude:/home/node/.claude
+  -v ~/.claude.json:/home/node/.claude.json
   -v "$PWD":/workspace
 )
 
