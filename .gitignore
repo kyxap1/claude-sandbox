@@ -1,5 +1,4 @@
 .claude/
 .commandhistory/
-.devcontainer/allowed-domains.conf
 docs/
 tests/bats/
