@@ -11,4 +11,5 @@ services:
       - NET_RAW
     volumes:
       - ~/.claude:/home/node/.claude
+      - ~/.claude.json:/home/node/.claude.json
       - .:/workspace
