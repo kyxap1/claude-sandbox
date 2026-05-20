@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-    source "$BATS_TEST_DIRNAME/../.devcontainer/lib/firewall-helpers.sh"
+    source "$BATS_TEST_DIRNAME/../.devcontainer/_firewall-helpers.sh"
     TEST_TMPDIR=$(mktemp -d)
 }
 

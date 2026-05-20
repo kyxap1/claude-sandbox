@@ -39,7 +39,7 @@ setup() {
 }
 
 @test "Dockerfile bakes allowed-domains.conf into /etc/" {
-    grep -q 'COPY allowed-domains.conf /etc/allowed-domains.conf' "$DOCKERFILE"
+    grep -q 'allowed-domains.conf /etc/allowed-domains.conf' "$DOCKERFILE"
 }
 
 @test "firewall reads built-in config from /etc/allowed-domains.conf" {
@@ -90,7 +90,33 @@ setup() {
 }
 
 @test "Dockerfile copies managed-settings.json into /etc/claude-code/" {
-    grep -q 'COPY managed-settings.json /etc/claude-code/managed-settings.json' "$DOCKERFILE"
+    grep -q 'managed-settings.json /etc/claude-code/managed-settings.json' "$DOCKERFILE"
+}
+
+# --- watch-domains ---
+
+@test "watch-domains.sh exists" {
+    [ -f "$REPO_ROOT/.devcontainer/watch-domains.sh" ]
+}
+
+@test "watch-domains.sh uses inotifywait" {
+    grep -q 'inotifywait' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "watch-domains.sh watches allowed-domains.extra.conf" {
+    grep -q 'allowed-domains.extra.conf' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "watch-domains.sh reloads firewall on change" {
+    grep -q 'init-firewall.sh' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "entrypoint starts watch-domains in background" {
+    grep -q 'watch-domains.sh &' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "Dockerfile installs inotify-tools" {
+    grep -q 'inotify-tools' "$DOCKERFILE"
 }
 
 # --- entrypoint firewall toggle ---

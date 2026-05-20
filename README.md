@@ -59,6 +59,8 @@ internal-registry.company.net
 
 The built-in domains are always applied; extras are additive.
 
+Changes to `allowed-domains.extra.conf` are picked up automatically — no container restart needed. A background watcher monitors the file via `inotifywait` and reloads firewall rules on change.
+
 ## Permissions
 
 Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
@@ -97,9 +99,10 @@ docker compose down
 .devcontainer/
   Dockerfile              # image: node + claude-code + firewall tools
   devcontainer.json       # fallback for VS Code / Codespaces users
-  entrypoint.sh           # firewall + claude (TTY) or sleep (daemon)
+  _firewall-helpers.sh    # shared functions for firewall script
+  entrypoint.sh           # firewall + watcher + claude (TTY) or sleep (daemon)
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
-  lib/firewall-helpers.sh # shared functions for firewall script
+  watch-domains.sh        # inotifywait watcher, reloads firewall on config change
   allowed-domains.conf    # default allowed domains (baked into image)
   managed-settings.json   # Claude Code managed settings (baked into image)
 compose.yaml              # primary entry point
