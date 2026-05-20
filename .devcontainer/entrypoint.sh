@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-sudo /usr/local/bin/init-firewall.sh >&2
+if [[ "${SANDBOX_FIREWALL:-true}" == "true" ]]; then
+    sudo /usr/local/bin/init-firewall.sh >&2
+fi
 
 if [ -t 0 ]; then
     exec claude --dangerously-skip-permissions "$@"

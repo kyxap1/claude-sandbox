@@ -9,6 +9,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    environment:
+      SANDBOX_FIREWALL: ${SANDBOX_FIREWALL:-true}
     volumes:
       - ~/.claude:/home/node/.claude
       - ~/.claude.json:/home/node/.claude.json
