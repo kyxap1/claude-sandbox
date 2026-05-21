@@ -39,7 +39,7 @@ setup() {
 }
 
 @test "Dockerfile bakes allowed-domains.conf into /etc/" {
-    grep -q 'COPY allowed-domains.conf /etc/allowed-domains.conf' "$DOCKERFILE"
+    grep -q 'allowed-domains.conf /etc/allowed-domains.conf' "$DOCKERFILE"
 }
 
 @test "firewall reads built-in config from /etc/allowed-domains.conf" {
@@ -90,7 +90,71 @@ setup() {
 }
 
 @test "Dockerfile copies managed-settings.json into /etc/claude-code/" {
-    grep -q 'COPY managed-settings.json /etc/claude-code/managed-settings.json' "$DOCKERFILE"
+    grep -q 'managed-settings.json /etc/claude-code/managed-settings.json' "$DOCKERFILE"
+}
+
+# --- watch-domains ---
+
+@test "watch-domains.sh exists" {
+    [ -f "$REPO_ROOT/.devcontainer/watch-domains.sh" ]
+}
+
+@test "watch-domains.sh uses inotifywait" {
+    grep -q 'inotifywait' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "watch-domains.sh watches allowed-domains.extra.conf" {
+    grep -q 'allowed-domains.extra.conf' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "watch-domains.sh reloads firewall on change" {
+    grep -q 'init-firewall.sh' "$REPO_ROOT/.devcontainer/watch-domains.sh"
+}
+
+@test "entrypoint starts watch-domains in background" {
+    grep -q 'watch-domains.sh &' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "Dockerfile installs inotify-tools" {
+    grep -q 'inotify-tools' "$DOCKERFILE"
+}
+
+# --- ulogd / NFLOG logging ---
+
+@test "ulogd.conf exists" {
+    [ -f "$REPO_ROOT/.devcontainer/ulogd.conf" ]
+}
+
+@test "ulogd.conf listens on NFLOG group 1" {
+    grep -q 'group=1' "$REPO_ROOT/.devcontainer/ulogd.conf"
+}
+
+@test "ulogd.conf outputs to stderr" {
+    grep -q '/dev/stderr' "$REPO_ROOT/.devcontainer/ulogd.conf"
+}
+
+@test "Dockerfile copies ulogd.conf into /etc/" {
+    grep -q 'ulogd.conf /etc/ulogd-blocked.conf' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs ulogd2" {
+    grep -q 'ulogd2' "$DOCKERFILE"
+}
+
+@test "firewall uses NFLOG target" {
+    grep -q 'NFLOG' "$FIREWALL_SCRIPT"
+}
+
+@test "firewall NFLOG uses group 1" {
+    grep -q '\-\-nflog-group 1' "$FIREWALL_SCRIPT"
+}
+
+@test "entrypoint starts ulogd" {
+    grep -q 'ulogd' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "sudoers allows ulogd" {
+    grep -q 'ulogd' "$DOCKERFILE"
 }
 
 # --- entrypoint firewall toggle ---
@@ -105,6 +169,10 @@ setup() {
 
 @test "compose.yaml declares SANDBOX_FIREWALL env" {
     grep -q 'SANDBOX_FIREWALL' "$COMPOSE_YAML"
+}
+
+@test "compose.yaml has SYS_NICE capability" {
+    grep -q 'SYS_NICE' "$COMPOSE_YAML"
 }
 
 # --- .env versions are valid ---

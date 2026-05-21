@@ -9,6 +9,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+      - SYSLOG
+      - SYS_NICE
     environment:
       SANDBOX_FIREWALL: ${SANDBOX_FIREWALL:-true}
     volumes:

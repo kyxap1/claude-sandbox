@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   iproute2 \
   dnsutils \
   aggregate \
+  inotify-tools \
+  ulogd2 \
   curl \
   jq \
   nano \
@@ -73,16 +75,14 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
-COPY init-firewall.sh /usr/local/bin/
-COPY lib/firewall-helpers.sh /usr/local/bin/lib/
-COPY entrypoint.sh /usr/local/bin/
+COPY *.sh /usr/local/bin/
 COPY allowed-domains.conf /etc/allowed-domains.conf
-USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
-  chmod 0440 /etc/sudoers.d/node-firewall
-
+COPY ulogd.conf /etc/ulogd-blocked.conf
 COPY managed-settings.json /etc/claude-code/managed-settings.json
+USER root
+RUN chmod +x /usr/local/bin/*.sh && \
+  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh, /usr/sbin/ulogd" > /etc/sudoers.d/node && \
+  chmod 0440 /etc/sudoers.d/node
 USER node
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
