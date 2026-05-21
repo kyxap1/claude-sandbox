@@ -96,3 +96,9 @@ export -f docker
   HOME="$TEST_TMPDIR" run bash "$SCRIPT"
   [ -f "$TEST_TMPDIR/.claude.json" ]
 }
+
+@test "adds SYS_NICE capability for ulogd" {
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -qF -- '--cap-add SYS_NICE'
+}

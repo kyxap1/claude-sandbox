@@ -3,6 +3,7 @@ set -euo pipefail
 
 if [[ "${SANDBOX_FIREWALL:-true}" == "true" ]]; then
     sudo /usr/local/bin/init-firewall.sh >&2
+    sudo /usr/sbin/ulogd -c /etc/ulogd-blocked.conf &
     /usr/local/bin/watch-domains.sh &
 fi
 

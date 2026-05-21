@@ -127,7 +127,8 @@ iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 # Then allow only specific outbound traffic to allowed domains
 iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
 
-# Explicitly REJECT all other outbound traffic for immediate feedback
+# Log and reject all other outbound traffic
+iptables -A OUTPUT -j NFLOG --nflog-group 1 --nflog-prefix "BLOCKED:"
 iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
 echo "Verifying firewall rules..."

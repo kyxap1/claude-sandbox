@@ -5,7 +5,7 @@ set -euo pipefail
 
 args=(
   --rm -it --pull always
-  --cap-add NET_ADMIN --cap-add NET_RAW
+  --cap-add NET_ADMIN --cap-add NET_RAW --cap-add SYSLOG --cap-add SYS_NICE
   -e SANDBOX_FIREWALL="${SANDBOX_FIREWALL:-true}"
   -v ~/.claude:/home/node/.claude
   -v ~/.claude.json:/home/node/.claude.json

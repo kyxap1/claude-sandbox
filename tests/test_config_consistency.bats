@@ -119,6 +119,44 @@ setup() {
     grep -q 'inotify-tools' "$DOCKERFILE"
 }
 
+# --- ulogd / NFLOG logging ---
+
+@test "ulogd.conf exists" {
+    [ -f "$REPO_ROOT/.devcontainer/ulogd.conf" ]
+}
+
+@test "ulogd.conf listens on NFLOG group 1" {
+    grep -q 'group=1' "$REPO_ROOT/.devcontainer/ulogd.conf"
+}
+
+@test "ulogd.conf outputs to stderr" {
+    grep -q '/dev/stderr' "$REPO_ROOT/.devcontainer/ulogd.conf"
+}
+
+@test "Dockerfile copies ulogd.conf into /etc/" {
+    grep -q 'ulogd.conf /etc/ulogd-blocked.conf' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs ulogd2" {
+    grep -q 'ulogd2' "$DOCKERFILE"
+}
+
+@test "firewall uses NFLOG target" {
+    grep -q 'NFLOG' "$FIREWALL_SCRIPT"
+}
+
+@test "firewall NFLOG uses group 1" {
+    grep -q '\-\-nflog-group 1' "$FIREWALL_SCRIPT"
+}
+
+@test "entrypoint starts ulogd" {
+    grep -q 'ulogd' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "sudoers allows ulogd" {
+    grep -q 'ulogd' "$DOCKERFILE"
+}
+
 # --- entrypoint firewall toggle ---
 
 @test "entrypoint checks SANDBOX_FIREWALL variable" {
@@ -131,6 +169,10 @@ setup() {
 
 @test "compose.yaml declares SANDBOX_FIREWALL env" {
     grep -q 'SANDBOX_FIREWALL' "$COMPOSE_YAML"
+}
+
+@test "compose.yaml has SYS_NICE capability" {
+    grep -q 'SYS_NICE' "$COMPOSE_YAML"
 }
 
 # --- .env versions are valid ---
