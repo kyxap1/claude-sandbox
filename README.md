@@ -48,6 +48,12 @@ environment:
   FIREWALL: "false"
 ```
 
+To see detailed firewall init logs (domain resolution, IP ranges, etc.):
+
+```bash
+FIREWALL_VERBOSE=true ./claude-sandbox
+```
+
 Built-in domains are baked into the image from [`.devcontainer/allowed-domains.conf`](.devcontainer/allowed-domains.conf).
 
 To add project-specific domains, create `.claude/allowed-domains.extra.conf` in your project root:
