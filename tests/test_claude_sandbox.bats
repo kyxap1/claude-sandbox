@@ -73,17 +73,17 @@ export -f docker
   [[ "$output" =~ "kyxap/claude-sandbox --continue" ]]
 }
 
-@test "SANDBOX_FIREWALL passes through to docker" {
-  SANDBOX_FIREWALL=false run bash "$SCRIPT"
+@test "FIREWALL passes through to docker" {
+  FIREWALL=false run bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SANDBOX_FIREWALL=false"* ]]
+  [[ "$output" == *"FIREWALL=false"* ]]
 }
 
-@test "SANDBOX_FIREWALL defaults to true" {
-  unset SANDBOX_FIREWALL
+@test "FIREWALL defaults to true" {
+  unset FIREWALL
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SANDBOX_FIREWALL=true"* ]]
+  [[ "$output" == *"FIREWALL=true"* ]]
 }
 
 @test "mounts ~/.claude.json into container" {

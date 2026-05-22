@@ -159,16 +159,16 @@ setup() {
 
 # --- entrypoint firewall toggle ---
 
-@test "entrypoint checks SANDBOX_FIREWALL variable" {
-    grep -q 'SANDBOX_FIREWALL' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+@test "entrypoint checks FIREWALL variable" {
+    grep -q 'FIREWALL' "$REPO_ROOT/.devcontainer/entrypoint.sh"
 }
 
-@test "entrypoint defaults SANDBOX_FIREWALL to true" {
-    grep -q '${SANDBOX_FIREWALL:-true}' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+@test "entrypoint defaults FIREWALL to true" {
+    grep -q '${FIREWALL:-true}' "$REPO_ROOT/.devcontainer/entrypoint.sh"
 }
 
-@test "compose.yaml declares SANDBOX_FIREWALL env" {
-    grep -q 'SANDBOX_FIREWALL' "$COMPOSE_YAML"
+@test "compose.yaml declares FIREWALL env" {
+    grep -q 'FIREWALL' "$COMPOSE_YAML"
 }
 
 @test "compose.yaml has SYS_NICE capability" {

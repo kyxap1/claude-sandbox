@@ -5,6 +5,8 @@ IFS=$'\n\t'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_firewall-helpers.sh"
 
+log() { [[ "${FIREWALL_VERBOSE:-false}" == "true" ]] && echo "$@"; return 0; }
+
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
@@ -19,12 +21,12 @@ ipset destroy allowed-domains 2>/dev/null || true
 
 # 2. Selectively restore ONLY internal Docker DNS resolution
 if [ -n "$DOCKER_DNS_RULES" ]; then
-    echo "Restoring Docker DNS rules..."
+    log "Restoring Docker DNS rules..."
     iptables -t nat -N DOCKER_OUTPUT 2>/dev/null || true
     iptables -t nat -N DOCKER_POSTROUTING 2>/dev/null || true
     echo "$DOCKER_DNS_RULES" | xargs -L 1 iptables -t nat
 else
-    echo "No Docker DNS rules to restore"
+    log "No Docker DNS rules to restore"
 fi
 
 # First allow DNS and localhost before any restrictions
@@ -44,7 +46,7 @@ iptables -A OUTPUT -o lo -j ACCEPT
 ipset create allowed-domains hash:net
 
 # Fetch GitHub meta information and aggregate + add their IP ranges
-echo "Fetching GitHub IP ranges..."
+log "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)
 if [ -z "$gh_ranges" ]; then
     echo "ERROR: Failed to fetch GitHub IP ranges" >&2
@@ -56,13 +58,13 @@ if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
     exit 1
 fi
 
-echo "Processing GitHub IPs..."
+log "Processing GitHub IPs..."
 while read -r cidr; do
     if ! validate_cidr "$cidr"; then
         echo "ERROR: Invalid CIDR range from GitHub meta: $cidr" >&2
         exit 1
     fi
-    echo "Adding GitHub range $cidr"
+    log "Adding GitHub range $cidr"
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
@@ -74,17 +76,17 @@ DOMAINS=()
 while IFS= read -r domain; do
     DOMAINS+=("$domain")
 done < <(parse_domains_conf "$BUILTIN_CONF")
-echo "Loaded ${#DOMAINS[@]} domains from built-in config"
+log "Loaded ${#DOMAINS[@]} domains from built-in config"
 
 if [ -f "$EXTRA_CONF" ]; then
     while IFS= read -r domain; do
         DOMAINS+=("$domain")
     done < <(parse_domains_conf "$EXTRA_CONF")
-    echo "Loaded additional domains from $EXTRA_CONF (total: ${#DOMAINS[@]})"
+    log "Loaded additional domains from $EXTRA_CONF (total: ${#DOMAINS[@]})"
 fi
 
 for domain in "${DOMAINS[@]}"; do
-    echo "Resolving $domain..."
+    log "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
         echo "ERROR: Failed to resolve $domain" >&2
@@ -96,7 +98,7 @@ for domain in "${DOMAINS[@]}"; do
             echo "ERROR: Invalid IP from DNS for $domain: $ip" >&2
             exit 1
         fi
-        echo "Adding $ip for $domain"
+        log "Adding $ip for $domain"
         ipset add allowed-domains "$ip"
     done < <(echo "$ips")
 done
@@ -109,7 +111,7 @@ if [ -z "$HOST_IP" ]; then
 fi
 
 HOST_NETWORK=$(echo "$HOST_IP" | sed "s/\.[0-9]*$/.0\/24/")
-echo "Host network detected as: $HOST_NETWORK"
+log "Host network detected as: $HOST_NETWORK"
 
 # Set up remaining iptables rules
 iptables -A INPUT -s "$HOST_NETWORK" -j ACCEPT
@@ -131,7 +133,7 @@ iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
 iptables -A OUTPUT -j NFLOG --nflog-group 1 --nflog-prefix "BLOCKED:"
 iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
-echo "Verifying firewall rules..."
+log "Verifying firewall rules..."
 if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - was able to reach https://example.com" >&2
     exit 1
@@ -140,4 +142,4 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - unable to reach https://api.github.com" >&2
     exit 1
 fi
-echo "Firewall verification passed"
+echo "Firewall ready"

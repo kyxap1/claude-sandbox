@@ -38,14 +38,20 @@ The container blocks all outbound traffic except allowed domains and GitHub IP r
 To disable the firewall:
 
 ```bash
-SANDBOX_FIREWALL=false ./claude-sandbox
+FIREWALL=false ./claude-sandbox
 ```
 
 Or in `compose.yaml`:
 
 ```yaml
 environment:
-  SANDBOX_FIREWALL: "false"
+  FIREWALL: "false"
+```
+
+To see detailed firewall init logs (domain resolution, IP ranges, etc.):
+
+```bash
+FIREWALL_VERBOSE=true ./claude-sandbox
 ```
 
 Built-in domains are baked into the image from [`.devcontainer/allowed-domains.conf`](.devcontainer/allowed-domains.conf).
