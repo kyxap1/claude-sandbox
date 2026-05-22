@@ -1,5 +1,7 @@
 services:
   claude:
+    image: kyxap/claude-sandbox
+    pull_policy: build
     build:
       context: .devcontainer
       args:
@@ -12,7 +14,8 @@ services:
       - SYSLOG
       - SYS_NICE
     environment:
-      SANDBOX_FIREWALL: ${SANDBOX_FIREWALL:-true}
+      FIREWALL: ${FIREWALL:-true}
+      FIREWALL_VERBOSE: ${FIREWALL_VERBOSE:-false}
     volumes:
       - ~/.claude:/home/node/.claude
       - ~/.claude.json:/home/node/.claude.json
