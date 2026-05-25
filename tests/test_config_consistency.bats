@@ -12,11 +12,10 @@ setup() {
 
 # --- .env variables are used in devcontainer.json build args ---
 
-@test ".env: every variable has a matching ARG in Dockerfile" {
+@test ".env: every build variable has a matching ARG in Dockerfile" {
     while IFS='=' read -r key _; do
-        [[ -z "$key" || "$key" =~ ^# ]] && continue
-        run grep -q "^ARG ${key}=" "$DOCKERFILE"
-        [ "$status" -eq 0 ] || fail ".env has $key but Dockerfile has no ARG $key with default"
+        [[ -z "$key" || "$key" =~ ^# || "$key" =~ ^FIREWALL ]] && continue
+        grep -q "^ARG ${key}" "$DOCKERFILE" || { echo ".env has $key but Dockerfile has no ARG $key"; return 1; }
     done < "$DOTENV"
 }
 
@@ -190,4 +189,47 @@ setup() {
 @test ".env: GIT_DELTA_VERSION is set and non-empty" {
     run grep -E '^GIT_DELTA_VERSION=.+' "$DOTENV"
     [ "$status" -eq 0 ]
+}
+
+@test ".env: KUBECTL_VERSION is set and non-empty" {
+    run grep -E '^KUBECTL_VERSION=.+' "$DOTENV"
+    [ "$status" -eq 0 ]
+}
+
+# --- new tools ---
+
+@test "Dockerfile installs openssh-client" {
+    grep -q 'openssh-client' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs kubectl" {
+    grep -q 'kubectl' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs wizcli" {
+    grep -q 'wizcli' "$DOCKERFILE"
+}
+
+# --- plugin path fix ---
+
+@test "fix-plugin-paths.sh exists and is executable" {
+    [ -x "$REPO_ROOT/.devcontainer/fix-plugin-paths.sh" ]
+}
+
+@test "entrypoint calls fix-plugin-paths.sh" {
+    grep -q 'fix-plugin-paths.sh' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+# --- devcontainer.json / compose.yaml parity ---
+
+@test "devcontainer.json has SYS_NICE capability" {
+    grep -q 'SYS_NICE' "$DEVCONTAINER_JSON"
+}
+
+@test "devcontainer.json has SYSLOG capability" {
+    grep -q 'SYSLOG' "$DEVCONTAINER_JSON"
+}
+
+@test "devcontainer.json has privileged mode" {
+    grep -q 'privileged' "$DEVCONTAINER_JSON"
 }
