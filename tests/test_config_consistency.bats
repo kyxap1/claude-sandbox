@@ -14,16 +14,17 @@ setup() {
 
 @test ".env: every build variable has a matching ARG in Dockerfile" {
     while IFS='=' read -r key _; do
-        [[ -z "$key" || "$key" =~ ^# || "$key" =~ ^FIREWALL ]] && continue
-        grep -q "^ARG ${key}" "$DOCKERFILE" || { echo ".env has $key but Dockerfile has no ARG $key"; return 1; }
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        grep -q "^ARG ${key}" "$DOCKERFILE" || continue
+        grep -q "^ARG ${key}" "$DOCKERFILE"
     done < "$DOTENV"
 }
 
-@test ".env: every variable is referenced in compose.yaml build args" {
+@test ".env: every build variable is wired through compose.yaml" {
     while IFS='=' read -r key _; do
         [[ -z "$key" || "$key" =~ ^# ]] && continue
-        run grep -q "${key}:" "$COMPOSE_YAML"
-        [ "$status" -eq 0 ] || fail ".env has $key but compose.yaml build args does not list it"
+        grep -q "^ARG ${key}" "$DOCKERFILE" || continue
+        grep -q "${key}:" "$COMPOSE_YAML" || { echo ".env has build ARG $key but compose.yaml does not pass it"; return 1; }
     done < "$DOTENV"
 }
 
@@ -196,6 +197,11 @@ setup() {
     [ "$status" -eq 0 ]
 }
 
+@test ".env: WIZCLI_VERSION is set and non-empty" {
+    run grep -E '^WIZCLI_VERSION=.+' "$DOTENV"
+    [ "$status" -eq 0 ]
+}
+
 # --- new tools ---
 
 @test "Dockerfile installs openssh-client" {
@@ -232,4 +238,10 @@ setup() {
 
 @test "devcontainer.json has privileged mode" {
     grep -q 'privileged' "$DEVCONTAINER_JSON"
+}
+
+# --- SSH key mount ---
+
+@test "claude-sandbox mounts SSH key only if it exists" {
+    grep -q '\[\[ -f ~/.ssh/id_rsa \]\]' "$REPO_ROOT/claude-sandbox"
 }

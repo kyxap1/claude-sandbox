@@ -9,6 +9,7 @@ services:
         CLAUDE_CODE_VERSION:
         GIT_DELTA_VERSION:
         KUBECTL_VERSION:
+        WIZCLI_VERSION:
     cap_add:
       - NET_ADMIN
       - NET_RAW

@@ -64,10 +64,20 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 ARG KUBECTL_VERSION=1.32.4
 RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" && \
-  chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
+  curl -fLo /usr/local/bin/kubectl "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" && \
+  case "$ARCH" in \
+    amd64) echo "10d739e9af8a59c9e7a730a2445916e04bc9cbb44bc79d22ce460cd329fa076c  /usr/local/bin/kubectl" ;; \
+    arm64) echo "c6f96d0468d6976224f5f0d81b65e1a63b47195022646be83e49d38389d572c2  /usr/local/bin/kubectl" ;; \
+  esac | sha256sum --check && \
+  chmod +x /usr/local/bin/kubectl
 
-RUN curl -o /usr/local/bin/wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-$(dpkg --print-architecture) && \
+ARG WIZCLI_VERSION=0.109.14
+RUN ARCH=$(dpkg --print-architecture) && \
+  curl -fLo /usr/local/bin/wizcli "https://downloads.wiz.io/wizcli/${WIZCLI_VERSION}/wizcli-linux-${ARCH}" && \
+  case "$ARCH" in \
+    amd64) echo "a749ddfb9b984b34f052c16aced3c18d7a7c459b507c126d0d6e117f585f2be0  /usr/local/bin/wizcli" ;; \
+    arm64) echo "90c17e0489ea7b95e87a6dda3bdd9fc7481da23efe54708853df26000ae78a63  /usr/local/bin/wizcli" ;; \
+  esac | sha256sum --check && \
   chmod +x /usr/local/bin/wizcli
 
 USER node
