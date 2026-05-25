@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   unzip \
   gnupg2 \
   gh \
+  openssh-client \
   iptables \
   ipset \
   iproute2 \
@@ -60,6 +61,14 @@ RUN ARCH=$(dpkg --print-architecture) && \
   wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
+
+ARG KUBECTL_VERSION=1.32.4
+RUN ARCH=$(dpkg --print-architecture) && \
+  wget "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" && \
+  chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
+
+RUN curl -o /usr/local/bin/wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-$(dpkg --print-architecture) && \
+  chmod +x /usr/local/bin/wizcli
 
 USER node
 

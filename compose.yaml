@@ -8,6 +8,7 @@ services:
         NODE_VERSION:
         CLAUDE_CODE_VERSION:
         GIT_DELTA_VERSION:
+        KUBECTL_VERSION:
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -16,7 +17,9 @@ services:
     environment:
       FIREWALL: ${FIREWALL:-true}
       FIREWALL_VERBOSE: ${FIREWALL_VERBOSE:-false}
+    privileged: true
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ~/.claude:/home/node/.claude
       - ~/.claude.json:/home/node/.claude.json
       - .:/workspace
