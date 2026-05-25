@@ -16,7 +16,8 @@
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
-    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind"
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.ssh/id_rsa,target=/home/node/.ssh/id_rsa,type=bind,readonly"
   ],
   "containerEnv": {
     "FIREWALL": "${localEnv:FIREWALL:true}",

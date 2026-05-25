@@ -22,4 +22,5 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.claude:/home/node/.claude
       - ~/.claude.json:/home/node/.claude.json
+      - ~/.ssh/id_rsa:/home/node/.ssh/id_rsa:ro
       - .:/workspace

@@ -10,6 +10,7 @@ args=(
   -e FIREWALL_VERBOSE="${FIREWALL_VERBOSE:-false}"
   -v ~/.claude:/home/node/.claude
   -v ~/.claude.json:/home/node/.claude.json
+  -v ~/.ssh/id_rsa:/home/node/.ssh/id_rsa:ro
   -v "$PWD":/workspace
 )
 
