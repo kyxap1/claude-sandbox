@@ -79,6 +79,16 @@ May 20 23:05:02 6f020ee1fac6 BLOCKED: IN= OUT=eth0 SRC=172.17.0.3 DST=93.184.215
 
 Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
 
+## Autonomous Mode
+
+The container supports fully autonomous, non-interactive operation via `CLAUDE.md`. Claude executes tasks without asking questions — git, kubectl, package installs, multi-file changes are all pre-approved.
+
+Plugins installed on the host (`~/.claude/plugins/`) are automatically patched at container start to fix host→container path mismatches (`fix-plugin-paths.sh`).
+
+## SSH Key
+
+If `~/.ssh/id_rsa` exists on the host, it is mounted read-only into the container for git clone over SSH. No action needed if the file is absent — the mount is conditional.
+
 ## Persistent State
 
 - `~/.claude/` (host) — auth, global settings, plugins (shared across projects)
@@ -111,11 +121,12 @@ docker compose down
 
 ```
 .devcontainer/
-  Dockerfile              # image: node + claude-code + firewall tools
+  Dockerfile              # image: node + claude-code + firewall tools + kubectl + wizcli
   devcontainer.json       # fallback for VS Code / Codespaces users
   _firewall-helpers.sh    # shared functions for firewall script
-  entrypoint.sh           # firewall + watcher + claude (TTY) or sleep (daemon)
+  entrypoint.sh           # firewall + watcher + plugin path fix + claude (TTY) or sleep (daemon)
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
+  fix-plugin-paths.sh     # rewrite host plugin paths to container paths on start
   watch-domains.sh        # inotifywait watcher, reloads firewall on config change
   allowed-domains.conf    # default allowed domains (baked into image)
   ulogd.conf              # NFLOG → stderr logging config (baked into image)
@@ -132,10 +143,20 @@ Edit `.env`:
 NODE_VERSION=24-bookworm-slim
 CLAUDE_CODE_VERSION=2.1.150
 GIT_DELTA_VERSION=0.18.2
+KUBECTL_VERSION=1.32.4
+WIZCLI_VERSION=0.109.14
 ```
+
+When updating `KUBECTL_VERSION` or `WIZCLI_VERSION`, update the corresponding sha256 checksums in the Dockerfile.
 
 Then rebuild:
 
 ```bash
 docker compose up -d --build
+```
+
+### Tests
+
+```bash
+./tests/bats/bin/bats tests/
 ```
