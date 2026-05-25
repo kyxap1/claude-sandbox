@@ -92,7 +92,8 @@ ENV VISUAL=vim
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
+  mkdir -p /home/node/.local/bin
 
 COPY *.sh /usr/local/bin/
 COPY allowed-domains.conf /etc/allowed-domains.conf

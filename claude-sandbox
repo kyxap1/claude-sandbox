@@ -15,6 +15,8 @@ args=(
 
 [[ -f ~/.ssh/id_rsa ]] && args+=(-v ~/.ssh/id_rsa:/home/node/.ssh/id_rsa:ro)
 
+[[ -n "${GH_TOKEN:-}" ]] && args+=(-e GH_TOKEN="$GH_TOKEN")
+
 while [[ "${1:-}" == "-v" ]]; do
   dir="$2"
   shift 2
