@@ -2,3 +2,4 @@
 .commandhistory/
 docs/
 tests/bats/
+.env
