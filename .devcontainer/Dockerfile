@@ -83,7 +83,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
 USER node
 
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV PATH=/home/node/.local/bin:$PATH:/usr/local/share/npm-global/bin
 
 ENV SHELL=/bin/bash
 
@@ -94,6 +94,22 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
   mkdir -p /home/node/.local/bin
+
+ARG UV_VERSION=0.11.17
+RUN ARCH=$(uname -m) && \
+  curl -fLo /tmp/uv.tar.gz "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${ARCH}-unknown-linux-gnu.tar.gz" && \
+  case "$ARCH" in \
+    x86_64)  echo "0017ccecaeb4d431d7f93b583ebff0c5c38e00eb734fcf13d05f72ca419125fe  /tmp/uv.tar.gz" ;; \
+    aarch64) echo "de008880a903ac2c5654647dc19a75c0d6652313c977a2bc5ce05e1e3a93429e  /tmp/uv.tar.gz" ;; \
+  esac | sha256sum --check && \
+  tar -xzf /tmp/uv.tar.gz --strip-components=1 -C /home/node/.local/bin \
+    "uv-${ARCH}-unknown-linux-gnu/uv" "uv-${ARCH}-unknown-linux-gnu/uvx" && \
+  rm /tmp/uv.tar.gz
+
+ARG DOCKER_VERSION=28.1.1
+RUN curl -fLo /tmp/docker.tgz "https://download.docker.com/linux/static/stable/$(uname -m)/docker-${DOCKER_VERSION}.tgz" && \
+  tar -xzf /tmp/docker.tgz --strip-components=1 -C /home/node/.local/bin docker/docker && \
+  rm /tmp/docker.tgz
 
 COPY *.sh /usr/local/bin/
 COPY allowed-domains.conf /etc/allowed-domains.conf

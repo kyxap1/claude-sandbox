@@ -7,5 +7,7 @@ CLAUDE_DIR="$HOME/.claude"
 for json in "$CLAUDE_DIR/plugins/known_marketplaces.json" "$CLAUDE_DIR/plugins/installed_plugins.json"; do
     [ -f "$json" ] || continue
     host_prefix=$(grep -oP '"\K/[^"]+(?=/plugins/(cache|marketplaces)/)' "$json" | head -1)
-    [ -n "$host_prefix" ] && [ "$host_prefix" != "$CLAUDE_DIR" ] && sed -i "s|$host_prefix|$CLAUDE_DIR|g" "$json"
+    if [ -n "$host_prefix" ] && [ "$host_prefix" != "$CLAUDE_DIR" ]; then
+        sed -i "s|$host_prefix|$CLAUDE_DIR|g" "$json"
+    fi
 done
