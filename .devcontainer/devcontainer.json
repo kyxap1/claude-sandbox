@@ -16,12 +16,15 @@
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude/plugins,target=/opt/claude-seed,type=bind,readonly",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",
     "source=${localEnv:HOME}/.ssh/id_rsa,target=/home/node/.ssh/id_rsa,type=bind,readonly"
   ],
   "containerEnv": {
     "FIREWALL": "${localEnv:FIREWALL:true}",
-    "FIREWALL_VERBOSE": "${localEnv:FIREWALL_VERBOSE:false}"
+    "FIREWALL_VERBOSE": "${localEnv:FIREWALL_VERBOSE:false}",
+    "CLAUDE_CODE_PLUGIN_SEED_DIR": "/opt/claude-seed",
+    "CLAUDE_CODE_PLUGIN_CACHE_DIR": "/home/node/.claude-plugins"
   },
   "customizations": {
     "vscode": {

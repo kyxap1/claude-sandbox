@@ -54,6 +54,9 @@ ENV DEVCONTAINER=true
 
 RUN mkdir -p /workspace && chown -R node:node /workspace
 
+# Writable plugin cache dir, kept out of the bind-mounted ~/.claude
+RUN mkdir -p /home/node/.claude-plugins && chown node:node /home/node/.claude-plugins
+
 WORKDIR /workspace
 
 ARG GIT_DELTA_VERSION=0.18.2
