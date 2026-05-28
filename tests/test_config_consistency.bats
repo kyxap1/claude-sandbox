@@ -216,14 +216,40 @@ setup() {
     grep -q 'wizcli' "$DOCKERFILE"
 }
 
-# --- plugin path fix ---
+# --- plugin seed ---
 
-@test "fix-plugin-paths.sh exists and is executable" {
-    [ -x "$REPO_ROOT/.devcontainer/fix-plugin-paths.sh" ]
+@test "seed-plugins.sh exists and is executable" {
+    [ -x "$REPO_ROOT/.devcontainer/seed-plugins.sh" ]
 }
 
-@test "entrypoint calls fix-plugin-paths.sh" {
-    grep -q 'fix-plugin-paths.sh' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+@test "entrypoint calls seed-plugins.sh" {
+    grep -q 'seed-plugins.sh' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "seed-plugins.sh reads CLAUDE_CODE_PLUGIN_SEED_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$REPO_ROOT/.devcontainer/seed-plugins.sh"
+}
+
+@test "Dockerfile creates the plugin cache dir" {
+    grep -q '/home/node/.claude-plugins' "$DOCKERFILE"
+}
+
+@test "all launch methods set CLAUDE_CODE_PLUGIN_SEED_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$COMPOSE_YAML" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$DEVCONTAINER_JSON" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods set CLAUDE_CODE_PLUGIN_CACHE_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$COMPOSE_YAML" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$DEVCONTAINER_JSON" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods mount host plugins as a read-only seed" {
+    grep -q '/opt/claude-seed:ro' "$COMPOSE_YAML" \
+        && grep -q '/opt/claude-seed:ro' "$REPO_ROOT/claude-sandbox" \
+        && grep '/opt/claude-seed' "$DEVCONTAINER_JSON" | grep -q 'readonly'
 }
 
 # --- devcontainer.json / compose.yaml parity ---

@@ -83,7 +83,7 @@ Claude runs in `--dangerously-skip-permissions` mode by default — the firewall
 
 The container supports fully autonomous, non-interactive operation via `CLAUDE.md`. Claude executes tasks without asking questions — git, kubectl, package installs, multi-file changes are all pre-approved.
 
-Plugins installed on the host (`~/.claude/plugins/`) are automatically patched at container start to fix host→container path mismatches (`fix-plugin-paths.sh`).
+Plugins installed on the host (`~/.claude/plugins/`) are mounted read-only as a seed (`CLAUDE_CODE_PLUGIN_SEED_DIR`) and loaded into the container's own writable cache at start (`seed-plugins.sh`), so the host's plugin registry is never modified.
 
 ## SSH Key
 
@@ -124,9 +124,9 @@ docker compose down
   Dockerfile              # image: node + claude-code + firewall tools + kubectl + wizcli
   devcontainer.json       # fallback for VS Code / Codespaces users
   _firewall-helpers.sh    # shared functions for firewall script
-  entrypoint.sh           # firewall + watcher + plugin path fix + claude (TTY) or sleep (daemon)
+  entrypoint.sh           # firewall + watcher + plugin seed + claude (TTY) or sleep (daemon)
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
-  fix-plugin-paths.sh     # rewrite host plugin paths to container paths on start
+  seed-plugins.sh         # register host plugin seed into the container cache on start
   watch-domains.sh        # inotifywait watcher, reloads firewall on config change
   allowed-domains.conf    # default allowed domains (baked into image)
   ulogd.conf              # NFLOG → stderr logging config (baked into image)
