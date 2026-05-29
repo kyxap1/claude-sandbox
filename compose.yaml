@@ -21,9 +21,7 @@ services:
       GH_TOKEN: ${GH_TOKEN:-}
       CLAUDE_CODE_PLUGIN_SEED_DIR: /opt/claude-seed
       CLAUDE_CODE_PLUGIN_CACHE_DIR: /home/node/.claude-plugins
-    privileged: true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - ~/.claude:/home/node/.claude
       - ~/.claude/plugins:/opt/claude-seed:ro
       - ~/.claude.json:/home/node/.claude.json

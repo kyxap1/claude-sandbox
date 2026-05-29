@@ -3,3 +3,4 @@
 docs/
 tests/bats/
 .env
+.compound-engineering/*.local.yaml

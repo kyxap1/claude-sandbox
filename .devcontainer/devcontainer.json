@@ -10,11 +10,9 @@
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW",
     "--cap-add=SYSLOG",
-    "--cap-add=SYS_NICE",
-    "--privileged"
+    "--cap-add=SYS_NICE"
   ],
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
     "source=${localEnv:HOME}/.claude/plugins,target=/opt/claude-seed,type=bind,readonly",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",

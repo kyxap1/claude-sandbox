@@ -109,11 +109,6 @@ RUN ARCH=$(uname -m) && \
     "uv-${ARCH}-unknown-linux-gnu/uv" "uv-${ARCH}-unknown-linux-gnu/uvx" && \
   rm /tmp/uv.tar.gz
 
-ARG DOCKER_VERSION=28.1.1
-RUN curl -fLo /tmp/docker.tgz "https://download.docker.com/linux/static/stable/$(uname -m)/docker-${DOCKER_VERSION}.tgz" && \
-  tar -xzf /tmp/docker.tgz --strip-components=1 -C /home/node/.local/bin docker/docker && \
-  rm /tmp/docker.tgz
-
 COPY *.sh /usr/local/bin/
 COPY allowed-domains.conf /etc/allowed-domains.conf
 COPY ulogd.conf /etc/ulogd-blocked.conf

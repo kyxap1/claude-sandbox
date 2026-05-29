@@ -269,8 +269,27 @@ setup() {
     grep -q 'SYSLOG' "$DEVCONTAINER_JSON"
 }
 
-@test "devcontainer.json has privileged mode" {
-    grep -q 'privileged' "$DEVCONTAINER_JSON"
+@test "no launch method runs in privileged mode" {
+    run grep -q 'privileged' "$COMPOSE_YAML"
+    [ "$status" -ne 0 ]
+    run grep -q 'privileged' "$DEVCONTAINER_JSON"
+    [ "$status" -ne 0 ]
+    run grep -q 'privileged' "$REPO_ROOT/claude-sandbox"
+    [ "$status" -ne 0 ]
+}
+
+@test "no launch method mounts the host docker socket" {
+    run grep -q 'docker.sock' "$COMPOSE_YAML"
+    [ "$status" -ne 0 ]
+    run grep -q 'docker.sock' "$DEVCONTAINER_JSON"
+    [ "$status" -ne 0 ]
+    run grep -q 'docker.sock' "$REPO_ROOT/claude-sandbox"
+    [ "$status" -ne 0 ]
+}
+
+@test "Dockerfile does not install the docker CLI" {
+    run grep -qE 'docker\.tgz|docker/docker' "$DOCKERFILE"
+    [ "$status" -ne 0 ]
 }
 
 # --- SSH key mount ---
