@@ -79,12 +79,38 @@ May 20 23:05:02 6f020ee1fac6 BLOCKED: IN= OUT=eth0 SRC=172.17.0.3 DST=93.184.215
 
 Claude runs in `--dangerously-skip-permissions` mode by default — the firewall is the safety net.
 
+## Autonomous Mode
+
+The container supports fully autonomous, non-interactive operation via `CLAUDE.md`. Claude executes tasks without asking questions — git, kubectl, package installs, multi-file changes are all pre-approved.
+
+Plugins installed on the host (`~/.claude/plugins/`) are mounted read-only as a seed (`CLAUDE_CODE_PLUGIN_SEED_DIR`) and loaded into the container's own writable cache at start (`seed-plugins.sh`), so the host's plugin registry is never modified.
+
+## SSH Key
+
+If `~/.ssh/id_rsa` exists on the host, it is mounted read-only into the container for git clone over SSH. No action needed if the file is absent — the mount is conditional.
+
+## Kubeconfig
+
+If `~/.kube/config` exists on the host, it is mounted read-only into the container so the Kubernetes MCP server (and `kubectl`) can find a cluster. The mount is conditional — without the file, the Kubernetes MCP server fails to start.
+
+To let the firewall reach your cluster's API server, add its host (or IP/CIDR) to `.claude/allowed-domains.extra.conf`. Note that exec-based auth helpers referenced by your kubeconfig (e.g. `aws`, `gcloud`) are not present in the container.
+
 ## Persistent State
 
 - `~/.claude/` (host) — auth, global settings, plugins (shared across projects)
 - `.commandhistory/` (workspace) — shell history
 
 ## Development
+
+### Local image builds
+
+By default `./claude-sandbox` runs the published image (`--pull always`), so local changes to the `Dockerfile` or baked-in config are ignored. To build the image locally from this repo and run that instead:
+
+```bash
+BUILD=true ./claude-sandbox
+```
+
+This builds via `compose.yaml` (versions from `.env`), then runs with `--pull never`. Runtime-only changes — launcher mounts and env vars — take effect without `BUILD`.
 
 ### Docker Compose
 
@@ -111,11 +137,12 @@ docker compose down
 
 ```
 .devcontainer/
-  Dockerfile              # image: node + claude-code + firewall tools
+  Dockerfile              # image: node + claude-code + firewall tools + kubectl + wizcli
   devcontainer.json       # fallback for VS Code / Codespaces users
   _firewall-helpers.sh    # shared functions for firewall script
-  entrypoint.sh           # firewall + watcher + claude (TTY) or sleep (daemon)
+  entrypoint.sh           # firewall + watcher + plugin seed + claude (TTY) or sleep (daemon)
   init-firewall.sh        # egress firewall (DROP all, allow specific domains)
+  seed-plugins.sh         # register host plugin seed into the container cache on start
   watch-domains.sh        # inotifywait watcher, reloads firewall on config change
   allowed-domains.conf    # default allowed domains (baked into image)
   ulogd.conf              # NFLOG → stderr logging config (baked into image)
@@ -132,10 +159,20 @@ Edit `.env`:
 NODE_VERSION=24-bookworm-slim
 CLAUDE_CODE_VERSION=2.1.153
 GIT_DELTA_VERSION=0.18.2
+KUBECTL_VERSION=1.32.4
+WIZCLI_VERSION=0.109.14
 ```
+
+When updating `KUBECTL_VERSION` or `WIZCLI_VERSION`, update the corresponding sha256 checksums in the Dockerfile.
 
 Then rebuild:
 
 ```bash
-docker compose up -d --build
+docker compose build
+```
+
+### Tests
+
+```bash
+./tests/bats/bin/bats tests/
 ```

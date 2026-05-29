@@ -7,6 +7,8 @@ if [[ "${FIREWALL:-true}" == "true" ]]; then
     /usr/local/bin/watch-domains.sh &
 fi
 
+/usr/local/bin/seed-plugins.sh
+
 if [ -t 0 ]; then
     exec claude --dangerously-skip-permissions "$@"
 else

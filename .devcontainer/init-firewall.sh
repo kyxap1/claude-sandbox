@@ -2,6 +2,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Single source of truth for the firewall toggle: skip all setup when disabled,
+# so every caller (entrypoint, devcontainer postStartCommand) honors FIREWALL.
+if [[ "${FIREWALL:-true}" != "true" ]]; then
+    echo "Firewall disabled (FIREWALL=${FIREWALL:-true}), skipping setup"
+    exit 0
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_firewall-helpers.sh"
 
@@ -65,7 +72,7 @@ while read -r cidr; do
         exit 1
     fi
     log "Adding GitHub range $cidr"
-    ipset add allowed-domains "$cidr"
+    ipset add -exist allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add allowed domains (baked-in default + optional user extras)
@@ -99,7 +106,7 @@ for domain in "${DOMAINS[@]}"; do
             exit 1
         fi
         log "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
+        ipset add -exist allowed-domains "$ip"
     done < <(echo "$ips")
 done
 

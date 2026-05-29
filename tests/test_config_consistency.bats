@@ -12,19 +12,18 @@ setup() {
 
 # --- .env variables are used in devcontainer.json build args ---
 
-@test ".env: every variable has a matching ARG in Dockerfile" {
+@test ".env: every *_VERSION variable has a matching ARG in Dockerfile" {
     while IFS='=' read -r key _; do
-        [[ -z "$key" || "$key" =~ ^# ]] && continue
-        run grep -q "^ARG ${key}=" "$DOCKERFILE"
-        [ "$status" -eq 0 ] || fail ".env has $key but Dockerfile has no ARG $key with default"
+        [[ "$key" =~ _VERSION$ ]] || continue
+        grep -q "^ARG ${key}" "$DOCKERFILE" || { echo ".env has $key but Dockerfile has no ARG $key"; return 1; }
     done < "$DOTENV"
 }
 
-@test ".env: every variable is referenced in compose.yaml build args" {
+@test ".env: every build variable is wired through compose.yaml" {
     while IFS='=' read -r key _; do
         [[ -z "$key" || "$key" =~ ^# ]] && continue
-        run grep -q "${key}:" "$COMPOSE_YAML"
-        [ "$status" -eq 0 ] || fail ".env has $key but compose.yaml build args does not list it"
+        grep -q "^ARG ${key}" "$DOCKERFILE" || continue
+        grep -q "${key}:" "$COMPOSE_YAML" || { echo ".env has build ARG $key but compose.yaml does not pass it"; return 1; }
     done < "$DOTENV"
 }
 
@@ -52,6 +51,12 @@ setup() {
 
 @test "firewall checks extra config file existence before reading" {
     grep -q '\[ -f "$EXTRA_CONF" \]' "$FIREWALL_SCRIPT"
+}
+
+@test "firewall adds ipset elements with -exist to tolerate duplicate IPs" {
+    run grep -E 'ipset add ' "$FIREWALL_SCRIPT"
+    [ "$status" -eq 0 ]
+    ! grep -E 'ipset add ' "$FIREWALL_SCRIPT" | grep -qv -- '-exist'
 }
 
 # --- Dockerfile consistency ---
@@ -167,6 +172,14 @@ setup() {
     grep -q '${FIREWALL:-true}' "$REPO_ROOT/.devcontainer/entrypoint.sh"
 }
 
+@test "init-firewall self-gates on FIREWALL so every caller honors it" {
+    grep -q '${FIREWALL:-true}' "$FIREWALL_SCRIPT"
+}
+
+@test "sudoers keeps FIREWALL so the gate works under sudo" {
+    grep -q 'env_keep += "FIREWALL' "$DOCKERFILE"
+}
+
 @test "compose.yaml declares FIREWALL env" {
     grep -q 'FIREWALL' "$COMPOSE_YAML"
 }
@@ -190,4 +203,118 @@ setup() {
 @test ".env: GIT_DELTA_VERSION is set and non-empty" {
     run grep -E '^GIT_DELTA_VERSION=.+' "$DOTENV"
     [ "$status" -eq 0 ]
+}
+
+@test ".env: KUBECTL_VERSION is set and non-empty" {
+    run grep -E '^KUBECTL_VERSION=.+' "$DOTENV"
+    [ "$status" -eq 0 ]
+}
+
+@test ".env: WIZCLI_VERSION is set and non-empty" {
+    run grep -E '^WIZCLI_VERSION=.+' "$DOTENV"
+    [ "$status" -eq 0 ]
+}
+
+# --- new tools ---
+
+@test "Dockerfile installs openssh-client" {
+    grep -q 'openssh-client' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs kubectl" {
+    grep -q 'kubectl' "$DOCKERFILE"
+}
+
+@test "Dockerfile installs wizcli" {
+    grep -q 'wizcli' "$DOCKERFILE"
+}
+
+# --- plugin seed ---
+
+@test "seed-plugins.sh exists and is executable" {
+    [ -x "$REPO_ROOT/.devcontainer/seed-plugins.sh" ]
+}
+
+@test "entrypoint calls seed-plugins.sh" {
+    grep -q 'seed-plugins.sh' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "seed-plugins.sh reads CLAUDE_CODE_PLUGIN_SEED_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$REPO_ROOT/.devcontainer/seed-plugins.sh"
+}
+
+@test "Dockerfile creates the plugin cache dir" {
+    grep -q '/home/node/.claude-plugins' "$DOCKERFILE"
+}
+
+@test "all launch methods set CLAUDE_CODE_PLUGIN_SEED_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$COMPOSE_YAML" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$DEVCONTAINER_JSON" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_SEED_DIR' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods set CLAUDE_CODE_PLUGIN_CACHE_DIR" {
+    grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$COMPOSE_YAML" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$DEVCONTAINER_JSON" \
+        && grep -q 'CLAUDE_CODE_PLUGIN_CACHE_DIR' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods mount host plugins as a read-only seed" {
+    grep -q '/opt/claude-seed:ro' "$COMPOSE_YAML" \
+        && grep -q '/opt/claude-seed:ro' "$REPO_ROOT/claude-sandbox" \
+        && grep '/opt/claude-seed' "$DEVCONTAINER_JSON" | grep -q 'readonly'
+}
+
+# --- devcontainer.json / compose.yaml parity ---
+
+@test "devcontainer.json has SYS_NICE capability" {
+    grep -q 'SYS_NICE' "$DEVCONTAINER_JSON"
+}
+
+@test "devcontainer.json has SYSLOG capability" {
+    grep -q 'SYSLOG' "$DEVCONTAINER_JSON"
+}
+
+@test "no launch method runs in privileged mode" {
+    run grep -q 'privileged' "$COMPOSE_YAML"
+    [ "$status" -ne 0 ]
+    run grep -q 'privileged' "$DEVCONTAINER_JSON"
+    [ "$status" -ne 0 ]
+    run grep -q 'privileged' "$REPO_ROOT/claude-sandbox"
+    [ "$status" -ne 0 ]
+}
+
+@test "no launch method mounts the host docker socket" {
+    run grep -q 'docker.sock' "$COMPOSE_YAML"
+    [ "$status" -ne 0 ]
+    run grep -q 'docker.sock' "$DEVCONTAINER_JSON"
+    [ "$status" -ne 0 ]
+    run grep -q 'docker.sock' "$REPO_ROOT/claude-sandbox"
+    [ "$status" -ne 0 ]
+}
+
+@test "Dockerfile does not install the docker CLI" {
+    run grep -qE 'docker\.tgz|docker/docker' "$DOCKERFILE"
+    [ "$status" -ne 0 ]
+}
+
+# --- SSH key mount ---
+
+@test "claude-sandbox mounts SSH key only if it exists" {
+    grep -q '\[\[ -f ~/.ssh/id_rsa \]\]' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "claude-sandbox mounts kubeconfig only if it exists" {
+    grep -q '\[\[ -f ~/.kube/config \]\]' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "claude-sandbox supports BUILD=true for local image builds" {
+    grep -q 'BUILD:-false' "$REPO_ROOT/claude-sandbox"
+    grep -q 'pull=never' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods mount the host kubeconfig read-only" {
+    grep -q '.kube/config:/home/node/.kube/config:ro' "$COMPOSE_YAML" \
+        && grep -q '.kube/config:/home/node/.kube/config:ro' "$REPO_ROOT/claude-sandbox" \
+        && grep '.kube/config' "$DEVCONTAINER_JSON" | grep -q 'readonly'
 }

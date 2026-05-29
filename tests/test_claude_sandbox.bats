@@ -102,3 +102,16 @@ export -f docker
   [ "$status" -eq 0 ]
   echo "$output" | grep -qF -- '--cap-add SYS_NICE'
 }
+
+@test "passes GH_TOKEN when set" {
+  GH_TOKEN="gho_test123" run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"GH_TOKEN=gho_test123"* ]]
+}
+
+@test "skips GH_TOKEN when not set" {
+  unset GH_TOKEN
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"GH_TOKEN"* ]]
+}
