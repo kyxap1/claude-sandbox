@@ -120,7 +120,7 @@ COPY ulogd.conf /etc/ulogd-blocked.conf
 COPY managed-settings.json /etc/claude-code/managed-settings.json
 USER root
 RUN chmod +x /usr/local/bin/*.sh && \
-  echo 'Defaults:node env_keep += "FIREWALL_VERBOSE"' > /etc/sudoers.d/node && \
+  echo 'Defaults:node env_keep += "FIREWALL FIREWALL_VERBOSE"' > /etc/sudoers.d/node && \
   echo 'node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh, /usr/sbin/ulogd' >> /etc/sudoers.d/node && \
   chmod 0440 /etc/sudoers.d/node
 USER node

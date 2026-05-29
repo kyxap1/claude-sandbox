@@ -2,6 +2,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Single source of truth for the firewall toggle: skip all setup when disabled,
+# so every caller (entrypoint, devcontainer postStartCommand) honors FIREWALL.
+if [[ "${FIREWALL:-true}" != "true" ]]; then
+    echo "Firewall disabled (FIREWALL=${FIREWALL:-true}), skipping setup"
+    exit 0
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_firewall-helpers.sh"
 

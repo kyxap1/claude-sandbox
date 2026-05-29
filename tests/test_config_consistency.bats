@@ -12,11 +12,10 @@ setup() {
 
 # --- .env variables are used in devcontainer.json build args ---
 
-@test ".env: every build variable has a matching ARG in Dockerfile" {
+@test ".env: every *_VERSION variable has a matching ARG in Dockerfile" {
     while IFS='=' read -r key _; do
-        [[ -z "$key" || "$key" =~ ^# ]] && continue
-        grep -q "^ARG ${key}" "$DOCKERFILE" || continue
-        grep -q "^ARG ${key}" "$DOCKERFILE"
+        [[ "$key" =~ _VERSION$ ]] || continue
+        grep -q "^ARG ${key}" "$DOCKERFILE" || { echo ".env has $key but Dockerfile has no ARG $key"; return 1; }
     done < "$DOTENV"
 }
 
@@ -165,6 +164,14 @@ setup() {
 
 @test "entrypoint defaults FIREWALL to true" {
     grep -q '${FIREWALL:-true}' "$REPO_ROOT/.devcontainer/entrypoint.sh"
+}
+
+@test "init-firewall self-gates on FIREWALL so every caller honors it" {
+    grep -q '${FIREWALL:-true}' "$FIREWALL_SCRIPT"
+}
+
+@test "sudoers keeps FIREWALL so the gate works under sudo" {
+    grep -q 'env_keep += "FIREWALL' "$DOCKERFILE"
 }
 
 @test "compose.yaml declares FIREWALL env" {
