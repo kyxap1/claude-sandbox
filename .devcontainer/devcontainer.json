@@ -16,7 +16,8 @@
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
     "source=${localEnv:HOME}/.claude/plugins,target=/opt/claude-seed,type=bind,readonly",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.ssh/id_rsa,target=/home/node/.ssh/id_rsa,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh/id_rsa,target=/home/node/.ssh/id_rsa,type=bind,readonly",
+    "source=${localEnv:HOME}/.kube/config,target=/home/node/.kube/config,type=bind,readonly"
   ],
   "containerEnv": {
     "FIREWALL": "${localEnv:FIREWALL:true}",

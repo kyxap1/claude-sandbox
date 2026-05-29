@@ -3,8 +3,17 @@ set -euo pipefail
 
 [[ -f ~/.claude.json ]] || touch ~/.claude.json
 
+pull=always
+if [[ "${BUILD:-false}" == "true" ]]; then
+  # Build the image locally from this repo (reusing compose's build config + .env),
+  # then run that local image instead of pulling the published one.
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  docker compose --project-directory "$script_dir" -f "$script_dir/compose.yaml" build
+  pull=never
+fi
+
 args=(
-  --rm -it --pull always
+  --rm -it --pull "$pull"
   --cap-add NET_ADMIN --cap-add NET_RAW --cap-add SYSLOG --cap-add SYS_NICE
   -e FIREWALL="${FIREWALL:-true}"
   -e FIREWALL_VERBOSE="${FIREWALL_VERBOSE:-false}"
@@ -17,6 +26,7 @@ args=(
 )
 
 [[ -f ~/.ssh/id_rsa ]] && args+=(-v ~/.ssh/id_rsa:/home/node/.ssh/id_rsa:ro)
+[[ -f ~/.kube/config ]] && args+=(-v ~/.kube/config:/home/node/.kube/config:ro)
 
 [[ -n "${GH_TOKEN:-}" ]] && args+=(-e GH_TOKEN="$GH_TOKEN")
 

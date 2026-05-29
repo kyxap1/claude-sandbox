@@ -72,7 +72,7 @@ while read -r cidr; do
         exit 1
     fi
     log "Adding GitHub range $cidr"
-    ipset add allowed-domains "$cidr"
+    ipset add -exist allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add allowed domains (baked-in default + optional user extras)
@@ -106,7 +106,7 @@ for domain in "${DOMAINS[@]}"; do
             exit 1
         fi
         log "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
+        ipset add -exist allowed-domains "$ip"
     done < <(echo "$ips")
 done
 

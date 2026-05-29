@@ -53,6 +53,12 @@ setup() {
     grep -q '\[ -f "$EXTRA_CONF" \]' "$FIREWALL_SCRIPT"
 }
 
+@test "firewall adds ipset elements with -exist to tolerate duplicate IPs" {
+    run grep -E 'ipset add ' "$FIREWALL_SCRIPT"
+    [ "$status" -eq 0 ]
+    ! grep -E 'ipset add ' "$FIREWALL_SCRIPT" | grep -qv -- '-exist'
+}
+
 # --- Dockerfile consistency ---
 
 @test "Dockerfile sets SHELL to /bin/bash" {
@@ -296,4 +302,19 @@ setup() {
 
 @test "claude-sandbox mounts SSH key only if it exists" {
     grep -q '\[\[ -f ~/.ssh/id_rsa \]\]' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "claude-sandbox mounts kubeconfig only if it exists" {
+    grep -q '\[\[ -f ~/.kube/config \]\]' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "claude-sandbox supports BUILD=true for local image builds" {
+    grep -q 'BUILD:-false' "$REPO_ROOT/claude-sandbox"
+    grep -q 'pull=never' "$REPO_ROOT/claude-sandbox"
+}
+
+@test "all launch methods mount the host kubeconfig read-only" {
+    grep -q '.kube/config:/home/node/.kube/config:ro' "$COMPOSE_YAML" \
+        && grep -q '.kube/config:/home/node/.kube/config:ro' "$REPO_ROOT/claude-sandbox" \
+        && grep '.kube/config' "$DEVCONTAINER_JSON" | grep -q 'readonly'
 }

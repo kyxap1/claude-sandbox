@@ -26,4 +26,5 @@ services:
       - ~/.claude/plugins:/opt/claude-seed:ro
       - ~/.claude.json:/home/node/.claude.json
       - ~/.ssh/id_rsa:/home/node/.ssh/id_rsa:ro
+      - ~/.kube/config:/home/node/.kube/config:ro
       - .:/workspace

@@ -89,12 +89,28 @@ Plugins installed on the host (`~/.claude/plugins/`) are mounted read-only as a 
 
 If `~/.ssh/id_rsa` exists on the host, it is mounted read-only into the container for git clone over SSH. No action needed if the file is absent — the mount is conditional.
 
+## Kubeconfig
+
+If `~/.kube/config` exists on the host, it is mounted read-only into the container so the Kubernetes MCP server (and `kubectl`) can find a cluster. The mount is conditional — without the file, the Kubernetes MCP server fails to start.
+
+To let the firewall reach your cluster's API server, add its host (or IP/CIDR) to `.claude/allowed-domains.extra.conf`. Note that exec-based auth helpers referenced by your kubeconfig (e.g. `aws`, `gcloud`) are not present in the container.
+
 ## Persistent State
 
 - `~/.claude/` (host) — auth, global settings, plugins (shared across projects)
 - `.commandhistory/` (workspace) — shell history
 
 ## Development
+
+### Local image builds
+
+By default `./claude-sandbox` runs the published image (`--pull always`), so local changes to the `Dockerfile` or baked-in config are ignored. To build the image locally from this repo and run that instead:
+
+```bash
+BUILD=true ./claude-sandbox
+```
+
+This builds via `compose.yaml` (versions from `.env`), then runs with `--pull never`. Runtime-only changes — launcher mounts and env vars — take effect without `BUILD`.
 
 ### Docker Compose
 
@@ -152,7 +168,7 @@ When updating `KUBECTL_VERSION` or `WIZCLI_VERSION`, update the corresponding sh
 Then rebuild:
 
 ```bash
-docker compose up -d --build
+docker compose build
 ```
 
 ### Tests
