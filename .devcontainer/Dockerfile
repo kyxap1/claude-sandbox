@@ -4,7 +4,7 @@ FROM node:${NODE_VERSION}
 ARG TZ=UTC
 ENV TZ="$TZ"
 
-ARG CLAUDE_CODE_VERSION=2.1.246
+ARG CLAUDE_CODE_VERSION=2.1.247
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less \
